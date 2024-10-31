@@ -1,0 +1,189 @@
+from PIL import Image, ImageDraw, ImageFont
+from moviepy.editor import concatenate_videoclips, ImageSequenceClip, VideoFileClip
+import numpy as np
+import re
+import os
+
+
+def split_sentences(text):
+    sentences = re.split(r'(?<=[.!?,])\s*', text.strip())
+    return [sentence.strip() for sentence in sentences if sentence]  # Filter out empty sentences
+
+
+def resize_to_aspect_ratio_with_zoom(image, target_aspect_ratio, target_resolution=(1080, 1920)):
+    """
+    Zoom the image to fit the target aspect ratio (9:16) while maintaining the original aspect ratio.
+    The image will be resized to fill the target resolution without squeezing or stretching.
+    """
+    original_width, original_height = image.size
+    original_aspect_ratio = original_width / original_height
+
+    # Determine the scaling factor needed to fit the target aspect ratio
+    if original_aspect_ratio < target_aspect_ratio:
+        # Zoom based on height
+        new_height = target_resolution[1]
+        new_width = int(new_height * original_aspect_ratio)
+    else:
+        # Zoom based on width
+        new_width = target_resolution[0]
+        new_height = int(new_width / original_aspect_ratio)
+
+    # Resize the image to the new dimensions
+    resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    # Create a new image with the target resolution and fill with black
+    new_image = Image.new("RGB", target_resolution, (0, 0, 0))
+
+    # Center the resized image on the new background
+    x_offset = (target_resolution[0] - new_width) // 2
+    y_offset = (target_resolution[1] - new_height) // 2
+    new_image.paste(resized_image, (x_offset, y_offset))
+
+    return new_image
+
+
+def add_centered_text_with_outline(image, text, font_path, font_size, text_color):
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(font_path, font_size)
+    max_width = int(image.size[0] * 0.85)
+
+    words = text.split()
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = f"{current_line} {word}".strip() if current_line else word
+        bbox = draw.textbbox((0, 0), test_line, font=font)
+        line_width = bbox[2] - bbox[0]
+
+        if line_width <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    if current_line:
+        lines.append(current_line)
+
+    total_height = sum(
+        draw.textbbox((0, 0), line, font=font)[3] - draw.textbbox((0, 0), line, font=font)[1] for line in lines
+    ) + (len(lines) - 1) * 10
+    y_position = (image.size[1] - total_height) // 2
+
+    for line in lines:
+        text_bbox = draw.textbbox((0, 0), line, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        x_position = (image.size[0] - text_width) // 2
+
+        outline_color = (255, 255, 255) if text_color == (0, 0, 0) else (0, 0, 0)
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx != 0 or dy != 0:
+                    draw.text((x_position + dx, y_position + dy), line, font=font, fill=outline_color)
+
+        draw.text((x_position, y_position), line, font=font, fill=text_color)
+        y_position += text_bbox[3] - text_bbox[1] + 10
+
+    return image
+
+
+def create_video_from_image_with_text(image_path, output_video_path, text, font_path, font_size, text_color,
+                                      total_duration):
+    image = Image.open(image_path).convert("RGB")
+    image = resize_to_aspect_ratio_with_zoom(image, 9 / 16)  # Use the zoom function
+
+    sentences = split_sentences(text)
+    sentence_duration = total_duration / len(sentences) if sentences else 0
+
+    clips = []
+    for sentence in sentences:
+        frame_image = add_centered_text_with_outline(image.copy(), sentence, font_path, font_size, text_color)
+        frame_array = np.array(frame_image)
+
+        text_clip = ImageSequenceClip([frame_array], fps=24).set_duration(sentence_duration)
+        clips.append(text_clip)
+
+    final_clip = concatenate_videoclips(clips, method="compose")
+    final_clip.write_videofile(output_video_path, codec='libx264', bitrate="5000k", fps=24)
+
+
+def create_video_from_video_with_text(video_path, output_video_path, text, font_path, font_size, text_color,
+                                      total_duration):
+    # Load the video
+    video_clip = VideoFileClip(video_path)
+
+    # Ensure the video duration is not longer than the actual video
+    trimmed_clip_duration = min(total_duration, video_clip.duration)
+
+    # Split the text into sentences
+    sentences = split_sentences(text)
+
+    # Calculate duration for each sentence
+    sentence_duration = trimmed_clip_duration / len(sentences) if sentences else 0
+
+    # Create a list to store the clips
+    clips = []
+
+    for i, sentence in enumerate(sentences):
+        # Define the start and end of the subclip for this sentence
+        start_time = i * sentence_duration
+        end_time = (i + 1) * sentence_duration
+
+        # Get the subclip for this sentence
+        sentence_clip = video_clip.subclip(start_time, end_time)
+
+        # Process frames for this subclip
+        frame_clips = []
+
+        # Use an iterator to process frames
+        for j, frame in enumerate(sentence_clip.iter_frames(fps=24, dtype='uint8')):
+            frame_image = Image.fromarray(frame)
+
+            # Resize the frame image with zoom to match the target aspect ratio
+            frame_image = resize_to_aspect_ratio_with_zoom(frame_image, 9 / 16, (1080, 1920))
+
+            # Add text to the frame
+            frame_with_text = add_centered_text_with_outline(frame_image.copy(), sentence, font_path, font_size, text_color)
+
+            # Append the processed frame to the list
+            frame_clips.append(np.array(frame_with_text))
+
+        # Create an ImageSequenceClip for this sentence's frames
+        if frame_clips:
+            text_clip = ImageSequenceClip(frame_clips, fps=24)  # Adjust fps as needed
+            clips.append(text_clip)
+        else:
+            print(f"No frames processed for sentence: '{sentence}'")
+
+    # Concatenate the clips
+    if clips:
+        final_clip = concatenate_videoclips(clips, method="compose")
+
+        # Write the output video file
+        final_clip.write_videofile(output_video_path, codec='libx264', bitrate="5000k", fps=24)
+    else:
+        print("No clips were created.")
+
+def create_video_from_media_with_text(input_path, output_video_path, text, font_path, font_size, text_color,
+                                      total_duration):
+    if os.path.splitext(input_path)[1].lower() in ['.jpg', '.jpeg', '.png', '.bmp', '.gif']:
+        create_video_from_image_with_text(input_path, output_video_path, text, font_path, font_size, text_color,
+                                          total_duration)
+    elif os.path.splitext(input_path)[1].lower() in ['.mp4', '.mov', '.avi', '.mkv', '.wmv']:
+        create_video_from_video_with_text(input_path, output_video_path, text, font_path, font_size, text_color,
+                                          total_duration)
+    else:
+        raise ValueError("Unsupported file format")
+
+
+# Example usage
+create_video_from_media_with_text(
+    input_path=r'R:\Photos\Random\VID_20240624_080330_HDR10PLUS.mp4',  # Path to your input video
+    output_video_path='output_video.mp4',  # Path to save the output video as MP4
+    text='A Man Who is Master in Patience, is Master in Everything. Here is another sentence! What about this one?',
+    # Text to add
+    font_path=r'R:\Roboto\Roboto-BoldItalic.ttf',  # Use raw string for font path
+    font_size=50,  # Font size
+    text_color=(0, 0, 0),  # Text color in RGB
+    total_duration=15  # Total duration for the video
+)
