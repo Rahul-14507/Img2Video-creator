@@ -1,0 +1,73 @@
+{
+    "version": "v1.0.0",
+    "entity": {
+        "type": "Individual",
+        "role": "Everything from programmer, developer, publisher, tester...",
+        "name": "Rahul Pujari",
+        "email": "pujarirahulpandu@gmail.com",
+        "phone": "9492106980",
+        "description": "I'm a developer interested AI and MAchine learning, especially whcih are useful for Robotics, because I am passionate about robotics and likes building stuff like drones, rovers and apps sometimes, at present am putting all my efforts into this single app. By the way also runs a YouTube channel but it's not running at all, it's crawling.",
+        "webpageUrl": {
+            "url": "https://github.com/Rahul-14507/Img2Video-creator.git",
+            "Img2VIdeo-creator": ""
+        }
+    },
+    "projects": [{
+        "guid": "Img2VIdeo Web based application for android",
+        "name": "Img2VIdeo-creator",
+        "description": "I am trying to make on web based mobile app for android that allows you to create videos for YouTube shorts, Reels etc from just a Picture or a Video as input using AI, which helps in Text overlay, Outlining the text, converting an image into a video, breaking into clips as per the punctuations in the text input, avoidstext overlay on faces or main subject and a lot more. Soon will try to bring it on WIndows and iOS",
+        "webpageUrl": {
+            "url": "https://github.com/Rahul-14507/Img2Video-creator.git"
+        },
+        "repositoryUrl": {
+            "url": "https://github.com/Rahul-14507/Img2Video-creator.git",
+            "wellKnown": "https://github.com/Rahul-14507/Img2Video-creator.git"
+        },
+     "funding": {
+        "channels": [
+            {
+                "guid": "To My bank account",
+                "type": "Google Pay(GPay)",
+                "address": "9492106980",
+                "description": "Will accept UPI transactions as I am from India and direct bank transfers. Please e-mail me for any further details."
+            },
+         "plans": [
+            {
+                "guid": "Upgrading Desktop",
+                "status": "active",
+                "name": "To move any further",
+                "description": "I am stuck with my PC of with 8 GB RAM, which is unable to process video that are more than 30 sec(output) anything over 30 Sec just makes my PC stop working due to limited RAM and GPU then I need to forcefully restart the PC to run properly. So definitly need an upgrade to 16 or 32 GB RAM and a GPU",
+                "amount": 50000,
+                "currency": "INR",
+                "frequency": "Once",
+                "channels": ["Google Pay(GPay)"]
+            },
+            {
+                "guid": "Hosting Monthly",
+                "status": "active",
+                "name": "Hosting support",
+                "description": "This will cover the monthly server hosting costs for this project. Ans also for me it costs more because I need to run this on a cloud server whcih must Contain Power CPU & GPU with a much more RAM, because obviously it's a Rendering software",
+                "amount": 75000,
+                "currency": "INR",
+                "frequency": "monthly",
+                "channels": ["Google Pay(GPay)"]
+            },
+            {
+                "guid": "angel-plan",
+                "status": "active",
+                "name": "Goodwill plan",
+                "description": "Pay anything you wish to show your goodwill for the project. Especially for future upgrading of the App which I am thinking to add some features like Green Screen, Automatically Splits the video based on the video content and adding transitions",
+                "amount": 150000,
+                "currency": "INR",
+                "frequency": "one-time",
+                "channels": ["Google Pay(GPay)"]
+            }
+        ],
+        "history": [
+            {"year": 2020, "income": 0, "expenses": 2000, "taxes": 0, "currency": "INR", "description": "No donations in the past, Asking from Parents for monthly subscription of applications that help me in solving problems in the code like ChatGPT..."},
+            {"year": 2021, "income": 0, "expenses": 5000, "taxes": 0, "currency": "INR", "description": "No donations in the past, Asking from Parents for monthly subscription of applications that help me in solving problems in the code like ChatGPT..."},
+            {"year": 2022, "income": 0, "expenses": 2500, "taxes": 0, "currency": "INR", "description": "No donations in the past, Asking from Parents for monthly subscription of applications that help me in solving problems in the code like ChatGPT..."},
+            {"year": 2023, "income": 0, "expenses": 2000, "taxes": 0, "currency": "INR", "description": "No donations in the past, Asking from Parents for monthly subscription of applications that help me in solving problems in the code like ChatGPT..."}
+        ]
+    }
+}
